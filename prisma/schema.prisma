@@ -1,0 +1,75 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  avatar        Avatar?
+  posts         Post[]
+  comments      Comment[]
+  tokens        Token[]
+  followers     User[]    @relation("UserFollows", references: [id])
+  following     User[]    @relation("UserFollows", references: [id])
+  savedPosts    Post[]    @relation("PostsSavedByUser")
+  likedPosts    Post[]    @relation("PostsLikedByUser")
+  likedComments Comment[] @relation("CommentsLikedByUser")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now())
+}
+
+model Post {
+  id              String    @id @default(uuid())
+  title           String
+  body            String    @db.Text
+  published       Boolean   @default(false)
+  author          User      @relation(fields: [authorId], references: [id])
+  authorId        String    
+  image           Image?
+  postSavedByUser User[]    @relation("PostsSavedByUser")
+  likes           User[]    @relation("PostsLikedByUser")
+  comments        Comment[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now())
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String   @db.Text
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String   
+  likes     User[]   @relation("CommentsLikedByUser")
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String   
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Token {
+  token    String  @unique
+  user     User    @relation(fields: [userId],references: [id])
+  userId   String
+}
+
+model Avatar {
+  id       String @id @default(uuid())
+  url      String
+  publicId String
+  owner    User   @relation(fields: [ownerId], references: [id])
+  ownerId  String 
+}
+
+model Image {
+  id       String @id @default(uuid())
+  url      String
+  publicId String
+  owner    Post   @relation(fields: [ownerId], references: [id])
+  ownerId  String 
+}
